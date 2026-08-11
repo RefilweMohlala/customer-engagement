@@ -1,0 +1,67 @@
+
+services:
+  engagement_postgres:
+    image: postgres:16
+    container_name: engagement_postgres
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - engagement_pg_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d
+    networks:
+      - engagement_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  engagement_ollama:
+    image: ollama/ollama:latest
+    container_name: engagement_ollama
+    restart: unless-stopped
+    ports:
+      - "11435:11434"
+    volumes:
+      - engagement_ollama_data:/root/.ollama
+    networks:
+      - engagement_net
+
+  engagement_n8n:
+    image: n8nio/n8n:latest
+    container_name: engagement_n8n
+    restart: unless-stopped
+    ports:
+      - "5679:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - N8N_EDITOR_BASE_URL=https://shone-shakily-multitask.ngrok-free.dev
+      - WEBHOOK_URL=https://shone-shakily-multitask.ngrok-free.dev/
+      - N8N_TRUST_PROXY=true
+      - GENERIC_TIMEZONE=Africa/Johannesburg
+      - NODE_FUNCTION_ALLOW_BUILTIN=*
+      - NODE_FUNCTION_ALLOW_EXTERNAL=*
+    volumes:
+      - engagement_n8n_data:/home/node/.n8n
+    depends_on:
+      engagement_postgres:
+        condition: service_healthy
+    networks:
+      - engagement_net
+
+volumes:
+  engagement_pg_data:
+  engagement_ollama_data:
+  engagement_n8n_data:
+
+networks:
+  engagement_net:
+    driver: bridge
