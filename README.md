@@ -58,8 +58,6 @@ Webhook Trigger (WhatsApp inbound)
   → Detect opt-out keywords → update consent status
 ```
 
-Full node-by-node build documentation, including every SQL query and n8n node configuration,
-is in [`docs/BUILD_GUIDE.md`](docs/BUILD_GUIDE.md).
 
 ## Where automation stops and a human decides
 
